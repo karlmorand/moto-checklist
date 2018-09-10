@@ -81,6 +81,7 @@ export default class App extends Component {
         containerStyle={item.done ? styles.itemContDone : styles.itemCont}
         titleStyle={styles.titleStyle}
         subtitleStyle={styles.subtitleStyle}
+        underlayColor={item.done ? 'green' : 'white'}
       />
     );
   };
