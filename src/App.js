@@ -7,7 +7,8 @@ import {
   View,
   TouchableOpacity,
   AsyncStorage,
-  Alert
+  Alert,
+  StatusBar
 } from 'react-native';
 import { ListItem } from 'react-native-elements';
 
@@ -18,14 +19,20 @@ import data from '../data';
 export default class App extends Component {
   state = {
     items: [],
-    showAddItem: false
+    showAddItem: false,
+    nightMode: false
   };
 
   componentDidMount() {
     const itemsWithStatus = data.map(item =>
       Object.assign({ name: item, done: false })
     );
-    this.setState({ items: itemsWithStatus }, () => this.loadItems());
+    const now = new Date();
+    const hours = now.getHours();
+    const nightMode = hours > 18 || hours < 7;
+    this.setState({ items: itemsWithStatus, nightMode }, () =>
+      this.loadItems()
+    );
   }
 
   loadItems = async () => {
@@ -78,10 +85,25 @@ export default class App extends Component {
         }
         title={item.name}
         subtitle={item.done ? 'Tap to delete from checklist' : null}
-        containerStyle={item.done ? styles.itemContDone : styles.itemCont}
-        titleStyle={styles.titleStyle}
+        containerStyle={
+          item.done
+            ? [
+                this.state.nightMode
+                  ? styles.itemContDoneNight
+                  : styles.itemContDone
+              ]
+            : [this.state.nightMode ? styles.itemContNight : styles.itemCont]
+        }
+        titleStyle={[
+          styles.titleStyle,
+          this.state.nightMode ? styles.titleStyleNight : null
+        ]}
         subtitleStyle={styles.subtitleStyle}
-        underlayColor={item.done ? 'green' : 'white'}
+        underlayColor={
+          item.done
+            ? [this.state.nightMode ? '#314700' : 'green']
+            : [this.state.nightMode ? '#3B454F' : 'white']
+        }
       />
     );
   };
@@ -119,8 +141,6 @@ export default class App extends Component {
   };
 
   deleteItem = async itemToDelete => {
-    console.log('Delete item:', itemToDelete);
-
     const itemList = this.state.items.filter(
       item => itemToDelete.name !== item.name
     );
@@ -141,24 +161,30 @@ export default class App extends Component {
       return <AddItem addItem={this.addItem} cancel={this.cancelAddItem} />;
     }
     return (
-      <SafeAreaView style={{ flex: 1 }}>
-        <FlatList
-          data={itemList}
-          keyExtractor={(item, index) => `${index}`}
-          renderItem={this.renderItem}
-        />
-        <View style={styles.buttonRow}>
-          <TouchableOpacity style={styles.buttonStyle} onPress={this.resetList}>
-            <Text style={styles.buttonText}>Reset List</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.buttonStyle}
-            onPress={() => this.setState({ showAddItem: true })}
-          >
-            <Text style={styles.buttonText}>Add Item</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
+      <View style={{ flex: 1 }}>
+        <StatusBar hidden="true" />
+        <SafeAreaView style={{ flex: 1 }}>
+          <FlatList
+            data={itemList}
+            keyExtractor={(item, index) => `${index}`}
+            renderItem={this.renderItem}
+          />
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={styles.buttonStyle}
+              onPress={this.resetList}
+            >
+              <Text style={styles.buttonText}>Reset List</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.buttonStyle}
+              onPress={() => this.setState({ showAddItem: true })}
+            >
+              <Text style={styles.buttonText}>Add Item</Text>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </View>
     );
   }
 }
@@ -166,6 +192,12 @@ export default class App extends Component {
 const styles = StyleSheet.create({
   itemCont: {
     backgroundColor: 'white'
+  },
+  itemContNight: {
+    backgroundColor: '#3B454F'
+  },
+  itemContDoneNight: {
+    backgroundColor: '#314700'
   },
   itemContDone: {
     backgroundColor: 'green'
@@ -176,6 +208,9 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: 'bold',
     paddingVertical: 40
+  },
+  titleStyleNight: {
+    color: 'grey'
   },
   subtitleStyle: {
     textAlign: 'center',
@@ -192,6 +227,7 @@ const styles = StyleSheet.create({
   },
   buttonRow: {
     flexDirection: 'row',
+    backgroundColor: '#3B454F',
     justifyContent: 'space-around'
   },
   buttonText: {
